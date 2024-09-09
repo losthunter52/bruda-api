@@ -12,9 +12,6 @@ from service.models import Department
 @permission_classes([IsAuthenticated])
 def list_departments(request):
 
-    if not request.user.groups.filter(name='admin').exists():
-        return Response({"error": "You do not have permission to perform this action."}, status=403)
-
     departments = Department.objects.all()
     departments_data = []
     for department in departments:

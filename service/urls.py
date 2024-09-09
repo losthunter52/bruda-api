@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import user, store, department, curriculos
+from .views import user, store, department, curriculos, uploads
 
 urlpatterns = [
     path('login/', user.login, name='login'),
@@ -26,9 +26,12 @@ urlpatterns = [
     
     # -- curriculos --
     path('curriculos/', curriculos.list_curriculos, name='list_curriculos'),
-    path('curriculos-simplificado/', curriculos.list_curriculos_simplificado, name='list_curriculos_simplificado'),
     path('curriculos/<int:cpf>/', curriculos.get_curriculo, name='get_curriculo'),
     path('curriculos/add/', curriculos.add_curriculo, name='add_curriculo'),
     path('curriculos/edit/<int:cpf>/', curriculos.edit_curriculo, name='edit_curriculo'),
     path('curriculos/delete/<int:cpf>/', curriculos.delete_curriculo, name='delete_curriculo'),
+
+    # -- uploads --
+    path('upload/foto/', uploads.upload_foto, name='upload_foto'),
+    path('upload/foto/delete/<int:id>/', uploads.delete_foto, name='delete_foto'),
 ]

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from common.utils import check_required_fields
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from service.models import Curriculo, Store, Department
+from service.models import Curriculo, Store, Department, Foto
 from datetime import datetime
 
 
@@ -22,13 +22,16 @@ def list_curriculos(request):
         setores_interesse = []
         setores_ideal = []
         for loja in curriculo.lojas_interesse.all():
-            lojas_interesse.append({'id': loja.id, 'name': loja.name, 'color': loja.color})
+            lojas_interesse.append(
+                {'id': loja.id, 'name': loja.name, 'color': loja.color})
 
         for setor in curriculo.setores_interesse.all():
-            setores_interesse.append({'id': setor.id, 'name': setor.name, 'color': setor.color})
+            setores_interesse.append(
+                {'id': setor.id, 'name': setor.name, 'color': setor.color})
 
         for setor in curriculo.setores_ideal.all():
-            setores_ideal.append({'id': setor.id, 'name': setor.name, 'color': setor.color})
+            setores_ideal.append(
+                {'id': setor.id, 'name': setor.name, 'color': setor.color})
 
         curriculo_data = {
             'id': curriculo.id,
@@ -36,10 +39,12 @@ def list_curriculos(request):
             'apresentacao_pessoal': curriculo.apresentacao_pessoal,
             'apresentacao_observacao': curriculo.apresentacao_observacao,
             'nome': curriculo.nome,
+            'data_de_nascimento': curriculo.data_de_nascimento,
             'idade': curriculo.idade,
             'cpf': curriculo.cpf,
             'rg': curriculo.rg,
             'telefone': curriculo.telefone,
+            'telefone_adicional': curriculo.telefone_adicional,
             'estado_civil': curriculo.estado_civil,
             'escolaridade': curriculo.escolaridade,
             'possui_cursos_complementares': curriculo.possui_cursos_complementares,
@@ -73,75 +78,13 @@ def list_curriculos(request):
             'observacao': curriculo.observacao,
             'ultima_atualizacao': curriculo.ultima_atualizacao
         }
-        curriculos_data.append(curriculo_data)
-
-    return Response(curriculos_data, status=200)
-
-
-@api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def list_curriculos_simplificado(request):
-    if not request.user.groups.filter(name__in=['admin', 'rh']).exists():
-        return Response({"error": "You do not have permission to perform this action."}, status=403)
-
-    curriculos = Curriculo.objects.all()
-    curriculos_data = []
-    for curriculo in curriculos:
-        lojas_interesse = []
-        setores_interesse = []
-        setores_ideal = []
-        for loja in curriculo.lojas_interesse.all():
-            lojas_interesse.append({'id': loja.id, 'name': loja.name})
-
-        for setor in curriculo.setores_interesse.all():
-            setores_interesse.append({'id': setor.id, 'name': setor.name})
-
-        for setor in curriculo.setores_ideal.all():
-            setores_ideal.append({'id': setor.id, 'name': setor.name})
-        curriculo_data = {
-            # 'id': curriculo.id,
-            'apresentacao_curriculo': curriculo.apresentacao_curriculo,
-            'apresentacao_pessoal': curriculo.apresentacao_pessoal,
-            'apresentacao_observacao': curriculo.apresentacao_observacao,
-            'nome': curriculo.nome,
-            'idade': curriculo.idade,
-            'cpf': curriculo.cpf,
-            # 'rg': curriculo.rg,
-            'telefone': curriculo.telefone,
-            # 'estado_civil': curriculo.estado_civil,
-            'escolaridade': curriculo.escolaridade,
-            # 'possui_cursos_complementares': curriculo.possui_cursos_complementares,
-            # 'cursos_observacao': curriculo.cursos_observacao,
-            # 'possui_dependentes': curriculo.possui_dependentes,
-            # 'numero_dependentes': curriculo.numero_dependentes,
-            # 'observacao_dependentes': curriculo.observacao_dependentes,
-            # 'cep': curriculo.cep,
-            # 'uf': curriculo.uf,
-            # 'cidade': curriculo.cidade,
-            # 'bairro': curriculo.bairro,
-            # 'rua': curriculo.rua,
-            # 'numero': curriculo.numero,
-            # 'complemento': curriculo.complemento,
-            'possui_experiencia': curriculo.possui_experiencia,
-            # 'relato_experiencia': curriculo.relato_experiencia,
-            # 'relato_desligamento': curriculo.relato_desligamento,
-            # 'observacao_experiencia': curriculo.observacao_experiencia,
-            # 'relato_motivacao': curriculo.relato_motivacao,
-            # 'lojas_interesse': lojas_interesse,
-            # 'setores_interesse': setores_interesse,
-            # 'relato_interesse': curriculo.relato_interesse,
-            # 'relato_equipe': curriculo.relato_equipe,
-            # 'restricoes_horario': curriculo.restricoes_horario,
-            # 'observacoes_entrevista': curriculo.observacoes_entrevista,
-            # 'entrevistador': curriculo.entrevistador,
-            # 'setores_ideal': setores_ideal,
-            # 'apto_contratacao': curriculo.apto_contratacao,
-            # 'ex_funcionario': curriculo.ex_funcionario,
-            # 'atualmente_contratado': curriculo.atualmente_contratado,
-            # 'observacao': curriculo.observacao,
-            # 'ultima_atualizacao': curriculo.ultima_atualizacao
-        }
+        
+        if(curriculo.curriculo != None):
+            curriculo_data['curriculo'] = {'id': curriculo.curriculo.id, 'foto': curriculo.curriculo.foto.url}
+            
+        if(curriculo.foto != None):
+            curriculo_data['foto'] = {'id': curriculo.foto.id, 'foto': curriculo.foto.foto.url}
+        
         curriculos_data.append(curriculo_data)
 
     return Response(curriculos_data, status=200)
@@ -151,12 +94,12 @@ def list_curriculos_simplificado(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_curriculo(request, cpf):
-    if not request.user.groups.filter(name__in=['admin', 'rh']).exists():
+    if not request.user.groups.filter(name__in=['admin', 'rh', 'user']).exists():
         return Response({"error": "You do not have permission to perform this action."}, status=403)
 
     try:
         curriculo = Curriculo.objects.get(
-            cpf=cpf)  # Busca o currículo pelo CPF
+            cpf=cpf)
     except Curriculo.DoesNotExist:
         return Response({"error": "Currículo não encontrado."}, status=404)
 
@@ -164,13 +107,16 @@ def get_curriculo(request, cpf):
     setores_interesse = []
     setores_ideal = []
     for loja in curriculo.lojas_interesse.all():
-        lojas_interesse.append({'id': loja.id, 'name': loja.name, 'color': loja.color})
+        lojas_interesse.append(
+            {'id': loja.id, 'name': loja.name, 'color': loja.color})
 
     for setor in curriculo.setores_interesse.all():
-        setores_interesse.append({'id': setor.id, 'name': setor.name, 'color': setor.color})
+        setores_interesse.append(
+            {'id': setor.id, 'name': setor.name, 'color': setor.color})
 
     for setor in curriculo.setores_ideal.all():
-        setores_ideal.append({'id': setor.id, 'name': setor.name, 'color': setor.color})
+        setores_ideal.append(
+            {'id': setor.id, 'name': setor.name, 'color': setor.color})
 
     curriculo_data = {
         'id': curriculo.id,
@@ -178,10 +124,12 @@ def get_curriculo(request, cpf):
         'apresentacao_pessoal': curriculo.apresentacao_pessoal,
         'apresentacao_observacao': curriculo.apresentacao_observacao,
         'nome': curriculo.nome,
+        'data_de_nascimento': curriculo.data_de_nascimento,
         'idade': curriculo.idade,
         'cpf': curriculo.cpf,
         'rg': curriculo.rg,
         'telefone': curriculo.telefone,
+        'telefone_adicional': curriculo.telefone_adicional,
         'estado_civil': curriculo.estado_civil,
         'escolaridade': curriculo.escolaridade,
         'possui_cursos_complementares': curriculo.possui_cursos_complementares,
@@ -215,6 +163,12 @@ def get_curriculo(request, cpf):
         'observacao': curriculo.observacao,
         'ultima_atualizacao': curriculo.ultima_atualizacao
     }
+    
+    if(curriculo.curriculo != None):
+        curriculo_data['curriculo'] = {'id': curriculo.curriculo.id, 'foto': curriculo.curriculo.foto.url}
+        
+    if(curriculo.foto != None):
+        curriculo_data['foto'] = {'id': curriculo.foto.id, 'foto': curriculo.foto.foto.url}
 
     return Response(curriculo_data, status=200)
 
@@ -224,18 +178,20 @@ def get_curriculo(request, cpf):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def import_curriculo(request):
-    
+
     data = request.data
 
     cpf = data.get('cpf')
     if Curriculo.objects.filter(cpf=cpf).exists():
         curriculo = Curriculo.objects.get(cpf=cpf)
-        
+
         curriculo.apresentacao_curriculo = data.get('apresentacao_curriculo')
         curriculo.apresentacao_pessoal = data.get('apresentacao_pessoal')
         curriculo.nome = data.get('nome')
         curriculo.idade = data.get('idade')
         curriculo.telefone = data.get('telefone')
+        curriculo.telefone_adicional = data.get('telefone')
+        curriculo.data_de_nascimento = '01-01-2000'
         curriculo.estado_civil = data.get('estado_civil')
         curriculo.escolaridade = data.get('escolaridade')
         curriculo.possui_cursos_complementares = data.get(
@@ -268,22 +224,24 @@ def import_curriculo(request):
         curriculo.complemento = data.get('complemento')
         curriculo.observacao = data.get('observacao')
         curriculo.observacoes_entrevista = data.get('observacoes_entrevista')
-        
+
         setores = data.get('setores_interesse')
         setores = setores.split(';')
         for setor in setores:
             formatted_setor = setor.strip().lower()
-            formatted_setor = ' '.join(word.capitalize() for word in formatted_setor.split())
+            formatted_setor = ' '.join(word.capitalize()
+                                       for word in formatted_setor.split())
 
-            departamento, created = Department.objects.get_or_create(name=formatted_setor)
-            
+            departamento, created = Department.objects.get_or_create(
+                name=formatted_setor)
+
             if departamento not in curriculo.setores_interesse.all():
                 curriculo.setores_interesse.add(departamento)
 
         curriculo.save()
 
         return Response({"message": "Curriculo updated successfully."}, status=200)
-        
+
     else:
         curriculo = Curriculo.objects.create(
             apresentacao_curriculo=data.get('apresentacao_curriculo'),
@@ -292,9 +250,12 @@ def import_curriculo(request):
             idade=data.get('idade'),
             cpf=data.get('cpf'),
             telefone=data.get('telefone'),
+            telefone_adicional=data.get('telefone'),
+            data_de_nascimento='01-01-2000',
             estado_civil=data.get('estado_civil'),
             escolaridade=data.get('escolaridade'),
-            possui_cursos_complementares=data.get('possui_cursos_complementares'),
+            possui_cursos_complementares=data.get(
+                'possui_cursos_complementares'),
             cursos_observacao=data.get('cursos_observacao'),
             possui_dependentes=data.get('possui_dependentes'),
             numero_dependentes=data.get('numero_dependentes'),
@@ -315,23 +276,25 @@ def import_curriculo(request):
             ex_funcionario=data.get('ex_funcionario'),
             atualmente_contratado=data.get('atualmente_contratado'),
             ultima_atualizacao=data.get('ultima_atualizacao'),
-            apresentacao_observacao = data.get('apresentacao_observacao'),
-            rg = data.get('rg'),
-            cep = data.get('cep'),
-            uf = data.get('uf'),
-            complemento = data.get('complemento'),
-            observacao = data.get('observacao'),
-            observacoes_entrevista = data.get('observacoes_entrevista')
+            apresentacao_observacao=data.get('apresentacao_observacao'),
+            rg=data.get('rg'),
+            cep=data.get('cep'),
+            uf=data.get('uf'),
+            complemento=data.get('complemento'),
+            observacao=data.get('observacao'),
+            observacoes_entrevista=data.get('observacoes_entrevista')
         )
 
         setores = data.get('setores_interesse')
         setores = setores.split(';')
         for setor in setores:
             formatted_setor = setor.strip().lower()
-            formatted_setor = ' '.join(word.capitalize() for word in formatted_setor.split())
+            formatted_setor = ' '.join(word.capitalize()
+                                       for word in formatted_setor.split())
 
-            departamento, created = Department.objects.get_or_create(name=formatted_setor)
-            
+            departamento, created = Department.objects.get_or_create(
+                name=formatted_setor)
+
             if departamento not in curriculo.setores_interesse.all():
                 curriculo.setores_interesse.add(departamento)
 
@@ -339,25 +302,26 @@ def import_curriculo(request):
 
         return Response({"message": "Curriculo created successfully."}, status=201)
 
+
 @api_view(['POST'])
 @parser_classes([JSONParser])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def add_curriculo(request):
-    # Verifica se o usuário tem permissão para realizar esta ação
     if not request.user.groups.filter(name__in=['admin', 'rh', 'user']).exists():
         return Response({"error": "You do not have permission to perform this action."}, status=403)
 
     data = request.data
 
-    # Campos obrigatórios que devem ser verificados
     required_fields = [
         "apresentacao_curriculo",
         "apresentacao_pessoal",
         "nome",
+        "data_de_nascimento",
         "idade",
         "cpf",
         "telefone",
+        "telefone_adicional",
         "estado_civil",
         "escolaridade",
         "possui_cursos_complementares",
@@ -382,7 +346,6 @@ def add_curriculo(request):
         "atualmente_contratado"
     ]
 
-    # Verifica se todos os campos obrigatórios foram fornecidos
     if not check_required_fields(data, required_fields):
         return Response({"error": "Missing required fields."}, status=400)
 
@@ -395,9 +358,11 @@ def add_curriculo(request):
         apresentacao_curriculo=data.get('apresentacao_curriculo'),
         apresentacao_pessoal=data.get('apresentacao_pessoal'),
         nome=data.get('nome'),
+        data_de_nascimento=data.get('data_de_nascimento'),
         idade=data.get('idade'),
         cpf=data.get('cpf'),
         telefone=data.get('telefone'),
+        telefone_adicional=data.get('telefone_adicional'),
         estado_civil=data.get('estado_civil'),
         escolaridade=data.get('escolaridade'),
         possui_cursos_complementares=data.get('possui_cursos_complementares'),
@@ -444,6 +409,20 @@ def add_curriculo(request):
             else:
                 departament = Department.objects.filter(id=setor["id"]).first()
                 curriculo.setores_ideal.add(departament)
+                
+    if 'foto' in data:
+        if not Foto.objects.filter(id=data.get('foto')["id"]).exists():
+            return Response({"error": "Foto not found."}, status=400)
+        else:
+            foto_perfil = Foto.objects.filter(id=data.get('foto')["id"]).first()
+            curriculo.foto = foto_perfil
+    
+    if 'curriculo' in data:
+        if not Foto.objects.filter(id=data.get('curriculo')["id"]).exists():
+            return Response({"error": "Curriculo not found."}, status=400)
+        else:
+            foto_curriculo = Foto.objects.filter(id=data.get('curriculo')["id"]).first()
+            curriculo.curriculo = foto_curriculo
 
     curriculo.apresentacao_observacao = data.get(
         'apresentacao_observacao', None)
@@ -476,6 +455,8 @@ def edit_curriculo(request, cpf):
         "nome",
         "idade",
         "telefone",
+        "telefone_adicional",
+        "data_de_nascimento",
         "estado_civil",
         "escolaridade",
         "possui_cursos_complementares",
@@ -511,8 +492,10 @@ def edit_curriculo(request, cpf):
     curriculo.apresentacao_curriculo = data.get('apresentacao_curriculo')
     curriculo.apresentacao_pessoal = data.get('apresentacao_pessoal')
     curriculo.nome = data.get('nome')
+    curriculo.data_de_nascimento = data.get('data_de_nascimento')
     curriculo.idade = data.get('idade')
     curriculo.telefone = data.get('telefone')
+    curriculo.telefone_adicional = data.get('telefone_adicional')
     curriculo.estado_civil = data.get('estado_civil')
     curriculo.escolaridade = data.get('escolaridade')
     curriculo.possui_cursos_complementares = data.get(
@@ -541,18 +524,46 @@ def edit_curriculo(request, cpf):
     curriculo.lojas_interesse.clear()
     curriculo.setores_interesse.clear()
     curriculo.setores_ideal.clear()
-
+    curriculo.foto = None
+    curriculo.curriculo = None
+        
     if 'lojas_interesse' in data:
-        loja_ids = [loja['id'] for loja in data.get('lojas_interesse')]
-        curriculo.lojas_interesse.set(loja_ids)
-
+        for loja in data.get('lojas_interesse'):
+            if not Store.objects.filter(id=loja["id"]).exists():
+                return Response({"error": "Store not found."}, status=400)
+            else:
+                store = Store.objects.filter(id=loja["id"]).first()
+                curriculo.lojas_interesse.add(store)
+                
     if 'setores_interesse' in data:
-        setor_ids = [setor['id'] for setor in data.get('setores_interesse')]
-        curriculo.setores_interesse.set(setor_ids)
-
+        for setor in data.get('setores_interesse'):
+            if not Department.objects.filter(id=setor["id"]).exists():
+                return Response({"error": "Department not found."}, status=400)
+            else:
+                departament = Department.objects.filter(id=setor["id"]).first()
+                curriculo.setores_interesse.add(departament)
+                
     if 'setores_ideal' in data:
-        setor_ideal_ids = [setor['id'] for setor in data.get('setores_ideal')]
-        curriculo.setores_ideal.set(setor_ideal_ids)
+        for setor in data.get('setores_ideal'):
+            if not Department.objects.filter(id=setor["id"]).exists():
+                return Response({"error": "Department not found."}, status=400)
+            else:
+                departament = Department.objects.filter(id=setor["id"]).first()
+                curriculo.setores_ideal.add(departament)
+                
+    if 'foto' in data:
+        if not Foto.objects.filter(id=data.get('foto')["id"]).exists():
+            return Response({"error": "Foto not found."}, status=400)
+        else:
+            foto_perfil = Foto.objects.filter(id=data.get('foto')["id"]).first()
+            curriculo.foto = foto_perfil
+    
+    if 'curriculo' in data:
+        if not Foto.objects.filter(id=data.get('curriculo')["id"]).exists():
+            return Response({"error": "Curriculo not found."}, status=400)
+        else:
+            foto_curriculo = Foto.objects.filter(id=data.get('curriculo')["id"]).first()
+            curriculo.curriculo = foto_curriculo
 
     curriculo.apresentacao_observacao = data.get(
         'apresentacao_observacao', None)

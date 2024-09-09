@@ -12,9 +12,6 @@ from service.models import Store
 @permission_classes([IsAuthenticated])
 def list_stores(request):
 
-    if not request.user.groups.filter(name='admin').exists():
-        return Response({"error": "You do not have permission to perform this action."}, status=403)
-
     stores = Store.objects.all()
     stores_data = []
     for store in stores:
